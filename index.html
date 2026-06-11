@@ -1,3 +1,4 @@
+```html
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -40,6 +41,12 @@ groundEnemyImg.src = "genemy.png";
 
 const spikeImg = new Image();
 spikeImg.src = "spike.png";
+
+/* Debug image loading */
+background.onerror = () => console.error("Failed to load back.png");
+flyingEnemyImg.onerror = () => console.error("Failed to load fenemy.png");
+groundEnemyImg.onerror = () => console.error("Failed to load genemy.png");
+spikeImg.onerror = () => console.error("Failed to load spike.png");
 
 const player = {
     x: 100,
@@ -127,6 +134,16 @@ function rectCollision(a,b){
 }
 
 window.addEventListener("keydown", e=>{
+    if (
+        e.key === " " ||
+        e.key === "ArrowUp" ||
+        e.key === "ArrowDown" ||
+        e.key === "ArrowLeft" ||
+        e.key === "ArrowRight"
+    ){
+        e.preventDefault();
+    }
+
     keys[e.key] = true;
 });
 
@@ -172,6 +189,7 @@ function update(){
     }
 
     for(const enemy of groundEnemies){
+
         enemy.x += enemy.speed;
 
         if(enemy.x < enemy.minX || enemy.x > enemy.maxX){
@@ -232,7 +250,12 @@ function draw(){
 
     ctx.clearRect(0,0,canvas.width,canvas.height);
 
-    ctx.drawImage(background,0,0,canvas.width,canvas.height);
+    if(background.complete && background.naturalWidth > 0){
+        ctx.drawImage(background,0,0,canvas.width,canvas.height);
+    }else{
+        ctx.fillStyle = "#222";
+        ctx.fillRect(0,0,canvas.width,canvas.height);
+    }
 
     ctx.fillStyle = "#654321";
     for(const p of platforms){
@@ -248,33 +271,66 @@ function draw(){
     );
 
     for(const spike of spikes){
-        ctx.drawImage(
-            spikeImg,
-            spike.x,
-            spike.y,
-            spike.w,
-            spike.h
-        );
+
+        if(spikeImg.complete && spikeImg.naturalWidth > 0){
+            ctx.drawImage(
+                spikeImg,
+                spike.x,
+                spike.y,
+                spike.w,
+                spike.h
+            );
+        }else{
+            ctx.fillStyle = "red";
+            ctx.fillRect(
+                spike.x,
+                spike.y,
+                spike.w,
+                spike.h
+            );
+        }
     }
 
     for(const enemy of groundEnemies){
-        ctx.drawImage(
-            groundEnemyImg,
-            enemy.x,
-            enemy.y,
-            enemy.width,
-            enemy.height
-        );
+
+        if(groundEnemyImg.complete && groundEnemyImg.naturalWidth > 0){
+            ctx.drawImage(
+                groundEnemyImg,
+                enemy.x,
+                enemy.y,
+                enemy.width,
+                enemy.height
+            );
+        }else{
+            ctx.fillStyle = "purple";
+            ctx.fillRect(
+                enemy.x,
+                enemy.y,
+                enemy.width,
+                enemy.height
+            );
+        }
     }
 
     for(const enemy of flyingEnemies){
-        ctx.drawImage(
-            flyingEnemyImg,
-            enemy.x,
-            enemy.y,
-            enemy.width,
-            enemy.height
-        );
+
+        if(flyingEnemyImg.complete && flyingEnemyImg.naturalWidth > 0){
+            ctx.drawImage(
+                flyingEnemyImg,
+                enemy.x,
+                enemy.y,
+                enemy.width,
+                enemy.height
+            );
+        }else{
+            ctx.fillStyle = "orange";
+            ctx.fillRect(
+                enemy.x,
+                enemy.y,
+                enemy.width,
+                enemy.height
+            );
+        }
     }
 
     ctx.fillStyle = "gold";
@@ -295,3 +351,4 @@ gameLoop();
 
 </body>
 </html>
+```
