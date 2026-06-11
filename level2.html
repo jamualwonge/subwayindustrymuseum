@@ -1,0 +1,332 @@
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Platformer Level 2</title>
+
+<style>
+body{
+    margin:0;
+    overflow:hidden;
+    background:black;
+}
+
+canvas{
+    display:block;
+    margin:auto;
+    border:2px solid white;
+}
+</style>
+</head>
+<body>
+
+<canvas id="game" width="1000" height="600"></canvas>
+
+<script>
+const canvas = document.getElementById("game");
+const ctx = canvas.getContext("2d");
+
+const gravity = 0.6;
+
+const background = new Image();
+background.src = "back.png";
+
+const flyingEnemyImg = new Image();
+flyingEnemyImg.src = "fenemy.png";
+
+const groundEnemyImg = new Image();
+groundEnemyImg.src = "genemy.png";
+
+const spikeImg = new Image();
+spikeImg.src = "spike.png";
+
+const player = {
+    x: 100,
+    y: 300,
+    width: 40,
+    height: 50,
+    vx: 0,
+    vy: 0,
+    speed: 5,
+    jumpPower: -13,
+    onGround: false
+};
+
+const keys = {};
+
+const platforms = [
+    {x:0,y:560,w:1000,h:40},
+
+    {x:120,y:480,w:120,h:20},
+    {x:320,y:430,w:120,h:20},
+    {x:520,y:360,w:120,h:20},
+    {x:720,y:300,w:120,h:20},
+
+    {x:550,y:220,w:120,h:20},
+    {x:350,y:160,w:120,h:20},
+    {x:150,y:120,w:120,h:20},
+
+    {x:700,y:140,w:180,h:20}
+];
+
+const spikes = [
+    {x:250,y:528,w:32,h:32},
+    {x:282,y:528,w:32,h:32},
+    {x:314,y:528,w:32,h:32},
+
+    {x:450,y:528,w:32,h:32},
+    {x:482,y:528,w:32,h:32},
+    {x:514,y:528,w:32,h:32},
+
+    {x:650,y:528,w:32,h:32},
+    {x:682,y:528,w:32,h:32},
+    {x:714,y:528,w:32,h:32}
+];
+
+const groundEnemies = [
+    {
+        x:140,
+        y:448,
+        width:32,
+        height:32,
+        minX:120,
+        maxX:220,
+        speed:2
+    },
+    {
+        x:540,
+        y:328,
+        width:32,
+        height:32,
+        minX:520,
+        maxX:620,
+        speed:2.5
+    },
+    {
+        x:720,
+        y:108,
+        width:32,
+        height:32,
+        minX:700,
+        maxX:850,
+        speed:3
+    }
+];
+
+const flyingEnemies = [
+    {
+        x:400,
+        y:260,
+        width:40,
+        height:40,
+        startY:260,
+        range:60,
+        angle:0
+    },
+    {
+        x:760,
+        y:180,
+        width:40,
+        height:40,
+        startY:180,
+        range:80,
+        angle:2
+    }
+];
+
+const flag = {
+    x:920,
+    y:60,
+    width:30,
+    height:80
+};
+
+function resetPlayer(){
+    player.x = 100;
+    player.y = 300;
+    player.vx = 0;
+    player.vy = 0;
+}
+
+function rectCollision(a,b){
+    return (
+        a.x < b.x + b.w &&
+        a.x + a.width > b.x &&
+        a.y < b.y + b.h &&
+        a.y + a.height > b.y
+    );
+}
+
+window.addEventListener("keydown", e=>{
+    keys[e.key] = true;
+});
+
+window.addEventListener("keyup", e=>{
+    keys[e.key] = false;
+});
+
+function update(){
+
+    player.vx = 0;
+
+    if(keys["ArrowLeft"] || keys["a"])
+        player.vx = -player.speed;
+
+    if(keys["ArrowRight"] || keys["d"])
+        player.vx = player.speed;
+
+    if((keys["ArrowUp"] || keys["w"] || keys[" "]) && player.onGround){
+        player.vy = player.jumpPower;
+        player.onGround = false;
+    }
+
+    player.vy += gravity;
+
+    player.x += player.vx;
+    player.y += player.vy;
+
+    player.onGround = false;
+
+    for(const p of platforms){
+
+        if(
+            player.x < p.x + p.w &&
+            player.x + player.width > p.x &&
+            player.y + player.height > p.y &&
+            player.y + player.height < p.y + p.h + 20 &&
+            player.vy >= 0
+        ){
+            player.y = p.y - player.height;
+            player.vy = 0;
+            player.onGround = true;
+        }
+    }
+
+    for(const enemy of groundEnemies){
+
+        enemy.x += enemy.speed;
+
+        if(enemy.x < enemy.minX || enemy.x > enemy.maxX){
+            enemy.speed *= -1;
+        }
+
+        if(rectCollision(player,{
+            x:enemy.x,
+            y:enemy.y,
+            w:enemy.width,
+            h:enemy.height
+        })){
+            resetPlayer();
+        }
+    }
+
+    for(const enemy of flyingEnemies){
+
+        enemy.angle += 0.04;
+        enemy.y = enemy.startY + Math.sin(enemy.angle) * enemy.range;
+
+        if(rectCollision(player,{
+            x:enemy.x,
+            y:enemy.y,
+            w:enemy.width,
+            h:enemy.height
+        })){
+            resetPlayer();
+        }
+    }
+
+    for(const spike of spikes){
+        if(rectCollision(player,{
+            x:spike.x,
+            y:spike.y,
+            w:spike.w,
+            h:spike.h
+        })){
+            resetPlayer();
+        }
+    }
+
+    if(rectCollision(player,{
+        x:flag.x,
+        y:flag.y,
+        w:flag.width,
+        h:flag.height
+    })){
+        window.location.href = "level3.html";
+    }
+
+    if(player.y > canvas.height){
+        resetPlayer();
+    }
+}
+
+function draw(){
+
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+
+    ctx.drawImage(background,0,0,canvas.width,canvas.height);
+
+    ctx.fillStyle = "#654321";
+    for(const p of platforms){
+        ctx.fillRect(p.x,p.y,p.w,p.h);
+    }
+
+    ctx.fillStyle = "dodgerblue";
+    ctx.fillRect(
+        player.x,
+        player.y,
+        player.width,
+        player.height
+    );
+
+    for(const spike of spikes){
+        ctx.drawImage(
+            spikeImg,
+            spike.x,
+            spike.y,
+            spike.w,
+            spike.h
+        );
+    }
+
+    for(const enemy of groundEnemies){
+        ctx.drawImage(
+            groundEnemyImg,
+            enemy.x,
+            enemy.y,
+            enemy.width,
+            enemy.height
+        );
+    }
+
+    for(const enemy of flyingEnemies){
+        ctx.drawImage(
+            flyingEnemyImg,
+            enemy.x,
+            enemy.y,
+            enemy.width,
+            enemy.height
+        );
+    }
+
+    ctx.fillStyle = "gold";
+    ctx.fillRect(flag.x, flag.y, flag.width, flag.height);
+
+    ctx.fillStyle = "white";
+    ctx.fillRect(flag.x - 20, flag.y, 20, 20);
+}
+
+function gameLoop(){
+    update();
+    draw();
+    requestAnimationFrame(gameLoop);
+}
+
+gameLoop();
+</script>
+
+</body>
+</html>
+```
